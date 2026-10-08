@@ -56,7 +56,40 @@ if ($py -and -not $SkipMcp) {
     Write-Host "  (Python not found - the Lua side works without it; bridge.py / mcp_server.py need Python 3.9+)"
 }
 
-# 5. next steps
+# 5. optional: connect AI agents (MCP server + skill)
+$server = Join-Path $Root "client\mcp_server.py"
+$pyExe  = if ($py) { $py.Source } else { "python" }
+$RootNoSlash = $Root.TrimEnd('\')   # a trailing backslash breaks Windows argument quoting
+$ans = Read-Host "Register the bridge's MCP server with Claude Desktop? [y/N]"
+if ($ans -match '^[yY]') {
+    $cfgPath = Join-Path $env:APPDATA "Claude\claude_desktop_config.json"
+    New-Item -ItemType Directory -Force -Path (Split-Path $cfgPath) | Out-Null
+    if (Test-Path $cfgPath) {
+        Copy-Item $cfgPath "$cfgPath.bak" -Force
+        $raw = Get-Content $cfgPath -Raw
+        $cfg = if ($raw -and $raw.Trim()) { $raw | ConvertFrom-Json } else { [pscustomobject]@{} }
+    } else { $cfg = [pscustomobject]@{} }
+    if (-not $cfg.PSObject.Properties["mcpServers"]) { $cfg | Add-Member -NotePropertyName mcpServers -NotePropertyValue ([pscustomobject]@{}) }
+    $entry = [pscustomobject]@{ command = $pyExe; args = @($server); env = [pscustomobject]@{ RESOLVE_BRIDGE_ROOT = $RootNoSlash } }
+    if ($cfg.mcpServers.PSObject.Properties["resolve"]) { $cfg.mcpServers.resolve = $entry } else { $cfg.mcpServers | Add-Member -NotePropertyName resolve -NotePropertyValue $entry }
+    [IO.File]::WriteAllText($cfgPath, ($cfg | ConvertTo-Json -Depth 20), $Utf8NoBom)
+    Write-Host "  Claude Desktop: added 'resolve' MCP server (backup: claude_desktop_config.json.bak). Restart Claude Desktop."
+}
+$claudeCli = Get-Command claude -ErrorAction SilentlyContinue
+if ($claudeCli) {
+    $ans = Read-Host "Register it with Claude Code too (user scope)? [y/N]"
+    if ($ans -match '^[yY]') { & $claudeCli.Source mcp add resolve --scope user -e "RESOLVE_BRIDGE_ROOT=$RootNoSlash" -- $pyExe $server }
+}
+$ans = Read-Host "Install the agent skill for Claude Code (~\.claude\skills\resolve-bridge)? [y/N]"
+if ($ans -match '^[yY]') {
+    $skillDst = Join-Path $env:USERPROFILE ".claude\skills\resolve-bridge"
+    New-Item -ItemType Directory -Force -Path $skillDst | Out-Null
+    Copy-Item (Join-Path $Root "skill\resolve-bridge\SKILL.md") $skillDst -Force
+    Write-Host "  skill installed: $skillDst"
+}
+Write-Host "  (claude.ai / Claude Desktop skills: zip the folder skill\resolve-bridge and upload it as a skill in Claude's settings)"
+
+# 6. next steps
 $server = (Join-Path $Root "client\mcp_server.py") -replace '\\', '\\'
 $rootJ  = $Root -replace '\\', '\\'
 Write-Host ""

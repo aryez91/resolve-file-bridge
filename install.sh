@@ -28,6 +28,29 @@ dofile(ROOT .. "resolve/resolve_bridge.lua")({
 })
 LUA
 echo "  launcher      : $LAUNCHER"
+
+# optional: connect AI agents
+read -r -p "Install the agent skill for Claude Code (~/.claude/skills/resolve-bridge)? [y/N] " a || true
+if [[ "${a:-}" =~ ^[yY] ]]; then mkdir -p "$HOME/.claude/skills/resolve-bridge"; cp "${ROOT}skill/resolve-bridge/SKILL.md" "$HOME/.claude/skills/resolve-bridge/"; echo "  skill installed"; fi
+if command -v claude >/dev/null 2>&1; then
+  read -r -p "Register the MCP server with Claude Code (user scope)? [y/N] " a || true
+  if [[ "${a:-}" =~ ^[yY] ]]; then claude mcp add resolve --scope user -e "RESOLVE_BRIDGE_ROOT=$ROOT" -- python3 "${ROOT}client/mcp_server.py"; fi
+fi
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  read -r -p "Register the MCP server with Claude Desktop? [y/N] " a || true
+  if [[ "${a:-}" =~ ^[yY] ]]; then
+    CFG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
+    mkdir -p "$(dirname "$CFG")"; [[ -f "$CFG" ]] && cp "$CFG" "$CFG.bak"
+    python3 - "$CFG" "$ROOT" <<'PY'
+import json, os, sys
+cfg_path, root = sys.argv[1], sys.argv[2]
+cfg = json.load(open(cfg_path)) if os.path.exists(cfg_path) else {}
+cfg.setdefault("mcpServers", {})["resolve"] = {"command": "python3", "args": [root + "client/mcp_server.py"], "env": {"RESOLVE_BRIDGE_ROOT": root}}
+json.dump(cfg, open(cfg_path, "w"), indent=2)
+PY
+    echo "  Claude Desktop: added 'resolve' MCP server (restart Claude Desktop)"
+  fi
+fi
 echo
 echo "Done. Next:"
 echo "  1. Add to your shell profile:  export RESOLVE_BRIDGE_ROOT=\"$ROOT\""

@@ -31,6 +31,7 @@ No network, no ports, nothing installed into Resolve except one script in the Sc
 | `client/bridge.py` | Python client + CLI (standard library only) |
 | `client/mcp_server.py` | MCP server: `resolve_ping`, `resolve_run_lua`, `resolve_list_nodes`, `resolve_render_frames`, `resolve_timeline_info` |
 | `skill/resolve-bridge/SKILL.md` | agent skill: safe workflow, verification, Fusion/Resolve gotchas |
+| `AGENTS.md` / `CLAUDE.md` | orientation for agents opened in this folder |
 | `examples/` | ping, list nodes, add node + render, timeline info, cut list → timeline, queue a render |
 
 ## Quick start
@@ -46,6 +47,19 @@ python client/bridge.py run examples/04_timeline_info.lua
 
 In a command, `comp` is the current Fusion comp, `bridge` holds helpers (see SKILL.md), `print()` output is
 captured, and whatever you assign to the global `result` comes back as JSON. Each command is one undo step.
+
+## Using it with an AI agent
+The installer can register the MCP server with Claude Desktop / Claude Code and install the agent skill,
+so a new conversation already has `resolve_*` tools and knows the rules. Other MCP clients: point them at
+`client/mcp_server.py` (see INSTALL.md); agents working inside this folder pick up `AGENTS.md` / `CLAUDE.md`.
+
+Then just ask, e.g.:
+- *"Check the Resolve bridge is connected and tell me what's in my current Fusion comp."*
+- *"Render frames 100, 500 and 900 of MediaOut1 and tell me if the text is readable."*
+- *"Build a new timeline from my interview clip without the long pauses, put a marker on every cut."*
+- *"Queue an H.264 render of the current timeline to my Desktop as project_v2."*
+
+Keep Resolve open with **Resolve Bridge Listen** running while the agent works.
 
 ## Known limitations
 - Results are written by saving a short-lived temporary comp. If that fails the listener falls back to

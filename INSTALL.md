@@ -6,7 +6,8 @@
 
 The installer creates the runtime folders, writes the Scripts-menu launcher with this folder's path into
 Resolve's Scripts/Utility folder, sets `RESOLVE_BRIDGE_ROOT` (Windows), optionally installs the `mcp`
-package, and prints the MCP config for your machine. Then restart Resolve and continue at step 3 below.
+package, can register the MCP server with Claude Desktop / Claude Code, can install the agent skill,
+and prints the MCP config for your machine. Then restart Resolve and continue at step 3 below.
 
 ## Manual way
 1. **Put the folder somewhere local**, e.g. `C:\resolve-file-bridge` (Windows) or `~/resolve-file-bridge`.
