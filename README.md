@@ -68,7 +68,8 @@ Keep Resolve open with **Resolve Bridge Listen** running while the agent works.
   saving your open comp, which renames it to `cmd_NNNNNN.comp` (cosmetic).
 - Every Fusion `comp:Render` shows a "Render completed" dialog.
 - Resolve API calls can return nil while a modal dialog is open - resend.
-- One client at a time; ~0.5 s latency per command (poll interval).
+- One client at a time. Latency ~0.5 s per command; after a minute without commands the listener polls
+  every 2 s to stay light, so the first command after a pause can take up to ~2 s.
 - Results go out via `comp:Save`; very large results (MBs) are slow - write images to `renders/` instead.
 - Verified on Windows with the free version of Resolve: commands on the Fusion and Edit pages, media pool
   reading, building a timeline from a cut list, render queue. macOS/Linux should work (path separators

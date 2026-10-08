@@ -22,7 +22,7 @@ Options:
   once     true = process pending commands once and return
 ]=]
 
-local VERSION = "0.1.0"
+local VERSION = "0.1.1"
 local fu = fusion or fu or app
 
 local function start(cfg)
@@ -213,13 +213,13 @@ local function start(cfg)
     result = nil
     comp = C()
     local c = comp
-    local t0 = os.clock()
+    local t0 = os.time()
     if c then c:StartUndo("bridge " .. base) end
     local ok, err = pcall(dofile, INBOX .. base .. ".lua")
     if c then c:EndUndo(true) end
     print = oldprint
     local out = { id = n, status = ok and "OK" or "ERROR", error = (not ok) and tostring(err) or nil,
-                  printed = lines, result = result, elapsed = os.clock() - t0, bridge = VERSION }
+                  printed = lines, result = result, elapsed = os.difftime(os.time(), t0), bridge = VERSION }
     local jok, js = pcall(json, out)
     if not jok then js = json({ id = n, status = "ERROR", error = "could not encode result: " .. tostring(js), printed = lines }) end
     local saved, how = save_result(C() or c, base, hex(js))
@@ -241,18 +241,24 @@ local function start(cfg)
   if exists(STOP) then print("resolve-file-bridge: a 'stop' file exists - delete it to keep listening") end
   local n = first_pending()
   local started = os.time()
+  local last_cmd, last_state, last_gc = os.time(), -1e9, os.time()
+  local IDLE_AFTER, IDLE_POLL, STATE_EVERY, GC_EVERY = 60, math.max(POLL, 2), 5, 60
   while true do
-    local fp = first_pending()
-    if fp > n then n = fp end
+    local now = os.time()   -- wall clock (os.clock is CPU time and stalls while waiting)
+    if now - last_state >= STATE_EVERY then      -- state.lua only changes when a client (re)starts
+      local fp = first_pending(); if fp > n then n = fp end
+      last_state = now
+    end
     while exists(OUTBOX .. name_of(n) .. ".comp") do n = n + 1 end
     if exists(INBOX .. name_of(n) .. ".lua") then
-      run(n); n = n + 1
+      run(n); n = n + 1; last_cmd = os.time()
       if stop_requested then break end
     else
       if ONCE then break end
       if exists(STOP) then break end
       if MINUTES > 0 and os.difftime(os.time(), started) > MINUTES * 60 then break end
-      bmd.wait(POLL)
+      if now - last_gc >= GC_EVERY then collectgarbage("collect"); last_gc = now end
+      bmd.wait((now - last_cmd > IDLE_AFTER) and IDLE_POLL or POLL)   -- back off when idle
     end
   end
   print("resolve-file-bridge: stopped")
