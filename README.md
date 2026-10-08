@@ -1,5 +1,7 @@
 # resolve-file-bridge
 
+[English](#resolve-file-bridge) · [עברית](#עברית)
+
 Run Lua **inside a running DaVinci Resolve** from outside it - including the **free** version - through
 plain files. Built so an AI agent (or any script) can inspect and edit Fusion comps, render test frames,
 read and build timelines, and queue renders, while you keep working in Resolve.
@@ -78,3 +80,47 @@ projects. Keep the folder local and private. See [SECURITY.md](SECURITY.md).
 
 ## License
 MIT
+
+---
+
+<div dir="rtl">
+
+## עברית
+
+**resolve-file-bridge** מאפשר להריץ קוד Lua **בתוך DaVinci Resolve פתוח** - גם בגרסה **החינמית** - מתוך תוכנה חיצונית, דרך קבצים רגילים.
+הוא נבנה כדי שסוכן בינה מלאכותית (כמו Claude) או כל סקריפט יוכלו לבדוק ולערוך קומפוזיציות Fusion, לרנדר פריימים לבדיקה,
+לקרוא ולבנות טיימליינים ולהפעיל רינדורים - בזמן שאתם ממשיכים לעבוד ב-Resolve.
+
+### למה דרך קבצים?
+ממשק הסקריפטים החיצוני של Resolve מוגבל (ככל הידוע לנו) לגרסת Studio. קונסולת הסקריפטים *שבתוך* Resolve עובדת גם בגרסה החינמית,
+אבל ה-Lua שלה מוגבל: אין גישה לקבצים, אין מחיקה ואין רשימת תיקיות. היא כן יכולה להריץ סקריפט, לבדוק אם קובץ קיים ולשמור קומפוזיציה - וזה מספיק:
+הפקודות נכתבות כקבצי Lua ממוספרים לתיקיית `inbox`, והתוצאות חוזרות כ-JSON בתוך קובץ קומפוזיציה בתיקיית `outbox`.
+אין רשת, אין פורטים, ולא מותקן כלום בתוך Resolve מלבד סקריפט אחד בתפריט Scripts.
+
+### התקנה
+1. הורידו את התיקייה למקום מקומי במחשב (עדיף נתיב באנגלית, למשל `C:\resolve-file-bridge`).
+2. ב-Windows הריצו **`install.bat`** (ב-macOS / Linux: `./install.sh`). המתקין:
+   - יוצר את תיקיות העבודה ומתקין את סקריפט ההפעלה בתפריט Scripts של Resolve;
+   - מגדיר את המשתנה `RESOLVE_BRIDGE_ROOT`;
+   - מציע (שאלות כן/לא) לרשום את שרת ה-MCP ב-Claude Desktop וב-Claude Code ולהתקין את ה-skill לסוכן.
+3. הפעילו מחדש את Resolve, פתחו פרויקט והפעילו **Workspace > Scripts > Resolve Bridge Listen**.
+4. בדיקה: `python client/bridge.py ping` - אמור להחזיר `"status": "OK"`.
+5. עצירה: `python client/bridge.py stop`.
+
+### שימוש עם סוכן AI
+אחרי ההתקנה, שיחה חדשה עם Claude כבר מכירה את כלי `resolve_*` ואת כללי הבטיחות. פשוט בקשו, למשל:
+- *"בדוק שהגשר ל-Resolve מחובר ותגיד לי מה יש בקומפוזיציית ה-Fusion הנוכחית."*
+- *"רנדר את פריימים 100, 500 ו-900 ותגיד לי אם הכיתוב קריא."*
+- *"בנה טיימליין חדש מהראיון בלי ההפסקות הארוכות, עם מרקר על כל חיתוך."*
+
+ה-skill (`skill/resolve-bridge/SKILL.md`) מנחה את הסוכן לבנות לצד העבודה שלכם, לאמת כל שינוי עם פריימים מרונדרים,
+ולא לשנות את הפלט הסופי, למחוק נודים או לדרוס רינדור קיים בלי לשאול.
+
+### אבטחה
+המאזין מריץ **כל** קובץ Lua שמגיע לתיקיית ה-inbox, עם גישה מלאה ל-Resolve ולפרויקטים שלכם.
+שמרו את התיקייה מקומית ופרטית (לא בתיקייה מסונכרנת לענן או משותפת), והפעילו את המאזין רק כשצריך. פרטים ב-[SECURITY.md](SECURITY.md).
+
+### רישיון
+MIT - חופשי לשימוש, שינוי והפצה.
+
+</div>
