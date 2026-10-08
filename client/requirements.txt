@@ -1,0 +1,1 @@
+mcp            # only needed for mcp_server.py; bridge.py uses the standard library only

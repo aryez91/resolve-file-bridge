@@ -1,0 +1,10 @@
+# runtime folders/files created by the bridge
+inbox/
+outbox/
+archive/
+renders/
+state.lua
+state.lua.tmp
+stop
+__pycache__/
+*.pyc
